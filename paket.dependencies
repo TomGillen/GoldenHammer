@@ -1,0 +1,20 @@
+source https://nuget.org/api/v2
+
+nuget FSharp.Core redirects: force
+nuget MoreLinq.Portable
+
+group Build
+  source https://nuget.org/api/v2
+  
+  nuget GitVersion.CommandLine prerelease
+  nuget SourceLink.Fake
+  nuget FAKE
+  nuget FSharp.Data
+  nuget FSharp.Formatting
+
+group Test
+  source https://nuget.org/api/v2
+  
+  nuget xunit.core
+  nuget xunit.runner.console
+  nuget Shouldly
