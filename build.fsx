@@ -90,19 +90,25 @@ let readVersionJson json = {
     PreReleaseTag = json?PreReleaseTag.AsString() 
 }
 
-let getVersion() : VersionInfo =
+let runExe exe args =
     let output = new StringBuilder()
 #if MONO
     let proc (info : ProcessStartInfo) = 
         info.FileName <- "mono"
-        info.Arguments <- "packages/build/GitVersion.CommandLine/tools/GitVersion.exe"
+        info.Arguments <- (sprintf "%s %s" exe args)
 #else
     let proc (info : ProcessStartInfo) = 
-        info.FileName <- "packages/build/GitVersion.CommandLine/tools/GitVersion.exe"
+        info.FileName <- exe
+        info.Arguments <- args
 #endif
-    ExecProcessWithLambdas proc (TimeSpan.FromSeconds 5.0) true (fun error -> log error) (fun out -> output.Append(out) |> ignore) |> ignore
+    ExecProcessWithLambdas proc (TimeSpan.FromMinutes 5.0) true (fun error -> log error) (fun out -> output.Append(out) |> ignore) |> ignore
     output.ToString() |> trace
-    output.ToString() |> JsonValue.Parse |> readVersionJson
+    output.ToString()
+
+let getVersion() : VersionInfo =
+    runExe "packages/build/GitVersion.CommandLine/tools/GitVersion.exe" "" 
+    |> JsonValue.Parse 
+    |> readVersionJson
 
 let version = getVersion()
 
@@ -213,6 +219,37 @@ Target "SourceLink" (fun _ ->
 #endif
 
 // --------------------------------------------------------------------------------------
+// Release Notes
+
+Target "ReleaseNotes" (fun _ ->
+    runExe "packages/build/GitChangeLog/tools/GitChangeLog.exe" "-o build/RELEASE_NOTES.md --header \"# Release Notes\" --source-links --compare-links" |> ignore
+    runExe "packages/build/GitChangeLog/tools/GitChangeLog.exe" "-o build/RELEASE_NOTES_MINIMAL.md" |> ignore
+)
+
+// --------------------------------------------------------------------------------------
+// Draft Release
+
+Target "DraftRelease" (fun _ ->
+    CreateDir "build"
+    let token = getBuildParamOrDefault "token" (environVarOrDefault "GITHUB_TOKEN" "")
+    let proc (info : ProcessStartInfo) = 
+      info.UseShellExecute <- true
+      info.FileName <- "github_changelog_generator"
+      info.Arguments <- (sprintf "-u %s -p %s --token=%s --future-release=%s --output=build/DRAFT_RELEASE.md --unreleased-only --header-label --cache-file=build/changelog-cache --cache-log=build/changelog-log.txt" gitOwner gitName token version.SemVer)    
+    let result = ExecProcess proc (TimeSpan.FromMinutes 5.0)
+    if result <> 0 then failwithf "github_changelog_generator failed with non-zero exit code"
+)
+
+// --------------------------------------------------------------------------------------
+// Tag Release
+
+Target "TagRelease" (fun _ ->
+    let tagName = sprintf "v%s" version.SemVer
+    let releaseNotes = File.ReadAllText("DRAFT_RELEASE.md")
+    runGitCommand ".git"  (sprintf "tag -a %s -m %s" tagName releaseNotes) |> ignore
+)
+
+// --------------------------------------------------------------------------------------
 // Build a NuGet package
 
 Target "NuGet" (fun _ ->
@@ -220,7 +257,7 @@ Target "NuGet" (fun _ ->
         { p with
             OutputPath = packageOut
             Version = version.NuGetVersion
-            ReleaseNotes = ""})
+            ReleaseNotes = File.ReadAllText("build/RELEASE_NOTES_MINIMAL.md") })
 )
 
 Target "PublishNuget" (fun _ ->
@@ -245,6 +282,7 @@ Target "All" DoNothing
 #else
   =?> ("SourceLink", Pdbstr.tryFind().IsSome )
 #endif
+  ==> "ReleaseNotes"
   ==> "NuGet"
   ==> "BuildPackage"
   ==> "All"

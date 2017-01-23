@@ -1,0 +1,21 @@
+type project
+title
+    GoldenHammer
+owners
+    Tom Gillen
+authors 
+    Tom Gillen
+projectUrl
+    https://github.com/TomGillen/GoldenHammer
+licenseUrl
+    https://github.com/TomGillen/GoldenHammer/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2017 Tom Gillen
+tags
+    game build compile tools
+summary
+    Asset compilation pipeline
+description
+    Asset build pipeline for preprocessing and packing game asset binaries.

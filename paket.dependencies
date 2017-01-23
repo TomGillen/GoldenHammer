@@ -11,6 +11,7 @@ group Build
   nuget FAKE
   nuget FSharp.Data
   nuget FSharp.Formatting
+  nuget GitChangeLog
 
 group Test
   source https://nuget.org/api/v2
