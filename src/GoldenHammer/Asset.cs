@@ -7,7 +7,7 @@ namespace GoldenHammer
     {
         string Identifier { get; }
         Type AssetType { get; }
-        AssetConfiguration Configuration { get; }
+        dynamic Configuration { get; }
     }
 
     public interface IAsset<T> : IAsset
@@ -18,10 +18,10 @@ namespace GoldenHammer
     public class Asset<T> : IAsset<T>
     {
         private readonly string _identifier;
-        private readonly AssetConfiguration _config;
+        private readonly dynamic _config;
         private readonly T _value;
 
-        internal Asset(string identifier, AssetConfiguration config, T value)
+        internal Asset(string identifier, dynamic config, T value)
         {
             _identifier = identifier;
             _config = config;
@@ -29,7 +29,7 @@ namespace GoldenHammer
         }
 
         public string Identifier => _identifier;
-        public AssetConfiguration Configuration => _config;
+        public dynamic Configuration => _config;
         public Type AssetType => typeof(T);
         public Task<T> Load() => Task.FromResult(_value);
     }

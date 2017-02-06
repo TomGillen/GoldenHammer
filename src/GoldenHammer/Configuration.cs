@@ -1,19 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
 
 namespace GoldenHammer
 {
-    public class AssetConfiguration
-    {
-        public T Get<T>()
-        {
-            return default(T);
-        }
-    }
-
-    public struct AssetSource
+    public class AssetSource
     {
         public string Path { get; set; }
-        public AssetConfiguration Configuration { get; set; }
+        public dynamic Configuration { get; set; }
+
+        public AssetSource()
+        {
+            Configuration = new ExpandoObject();
+        }
     }
 
     public class BundleConfiguration

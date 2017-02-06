@@ -140,7 +140,7 @@ namespace GoldenHammer
             _pipeline = pipeline;
         }
 
-        public Asset<T> Asset<T>(string identifier, AssetConfiguration config, T data)
+        public Asset<T> Asset<T>(string identifier, dynamic config, T data)
         {
             return new Asset<T>(identifier, config, data);
         }

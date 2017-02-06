@@ -2,6 +2,7 @@ source https://nuget.org/api/v2
 
 nuget FSharp.Core redirects: force
 nuget MoreLinq.Portable
+nuget Newtonsoft.Json
 
 group Build
   source https://nuget.org/api/v2

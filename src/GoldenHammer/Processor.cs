@@ -9,7 +9,6 @@ namespace GoldenHammer
 
     public interface IAssetProcessor<TIn, TOut>
     {
-        string Identifier { get; }
         Task<IAsset<TOut>> Process(BuildContext context, IAsset<TIn> asset);
     }
 
@@ -24,8 +23,6 @@ namespace GoldenHammer
             _first = first;
             _second = second;
         }
-
-        public string Identifier => $"{_first.Identifier}-{_second.Identifier}";
 
         public async Task<IAsset<TOut>> Process(BuildContext context, IAsset<TIn> asset)
         {
