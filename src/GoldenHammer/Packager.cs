@@ -15,8 +15,14 @@ namespace GoldenHammer
         public IEnumerable<IAsset> Assets { get; private set; }
     }
 
-    public interface IAssetPackager
+    public interface IAssetPackager : IPipelineIdentity
     {
         Task Package(string name, IEnumerable<AssetBundle> bundles);
+    }
+
+    public abstract class AssetPackager : IAssetPackager
+    {
+        public virtual string Identity => GetType().AssemblyQualifiedName;
+        public abstract Task Package(string name, IEnumerable<AssetBundle> bundles);
     }
 }

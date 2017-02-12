@@ -1,5 +1,7 @@
 Newtonsoft.Json
+protobuf-net
 
 group Test
 xunit.core
+xunit.assert
 Shouldly

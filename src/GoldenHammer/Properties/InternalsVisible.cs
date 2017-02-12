@@ -1,4 +1,10 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("GoldenHammer.Tests")]
+namespace GoldenHammer
 {
-  public class $CLASS$ {$END$}
+    public class InternalsVisible
+    {
+
+    }
 }

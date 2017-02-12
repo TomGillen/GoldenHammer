@@ -190,7 +190,7 @@ Target "Build" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
 
-Target "RunTests" (fun _ ->
+Target "Test" (fun _ ->
     CreateDir testOut
     !! testAssemblies
     |> xUnit2 (fun p ->
@@ -277,7 +277,7 @@ Target "All" DoNothing
   ==> "AssemblyInfo"
   ==> "Build"
   ==> "CopyBinaries"
-  ==> "RunTests"
+  ==> "Test"
 #if MONO
 #else
   =?> ("SourceLink", Pdbstr.tryFind().IsSome )

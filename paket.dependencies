@@ -3,6 +3,7 @@ source https://nuget.org/api/v2
 nuget FSharp.Core redirects: force
 nuget MoreLinq.Portable
 nuget Newtonsoft.Json
+nuget protobuf-net
 
 group Build
   source https://nuget.org/api/v2
@@ -18,5 +19,6 @@ group Test
   source https://nuget.org/api/v2
   
   nuget xunit.core
+  nuget xunit.assert
   nuget xunit.runner.console
   nuget Shouldly

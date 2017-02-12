@@ -15,22 +15,22 @@ namespace GoldenHammer
         Task<T> Load();
     }
 
-    public class Asset<T> : IAsset<T>
+    public class ValueAsset<T> : IAsset<T>
     {
         private readonly string _identifier;
         private readonly dynamic _config;
-        private readonly T _value;
+        private readonly Task<T> _value;
 
-        internal Asset(string identifier, dynamic config, T value)
+        internal ValueAsset(string identifier, object config, T value)
         {
             _identifier = identifier;
             _config = config;
-            _value = value;
+            _value = Task.FromResult(value);
         }
 
         public string Identifier => _identifier;
         public dynamic Configuration => _config;
         public Type AssetType => typeof(T);
-        public Task<T> Load() => Task.FromResult(_value);
+        public Task<T> Load() => _value;
     }
 }
