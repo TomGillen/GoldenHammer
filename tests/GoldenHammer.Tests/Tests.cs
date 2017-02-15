@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using GoldenHammer.Caching;
 using Xunit;
 using Shouldly;
 
@@ -47,7 +46,7 @@ namespace GoldenHammer.Tests
         public void SetupPipeline()
         {
             var pipeline = PipelineBuilder
-                .Start("TestPipeline", new MemoryCas(), new NullBuildCache(), new Packager())
+                .Start("TestPipeline", new MemoryDataCache(), new NullBuildCache(), new Packager())
                 .Use(new FilenameImporter())
                 .Use(new ExclaimProcessor())
                 .Create();
@@ -59,7 +58,7 @@ namespace GoldenHammer.Tests
             var output = new Packager();
 
             var pipeline = PipelineBuilder
-                .Start("TestPipeline", new MemoryCas(), new NullBuildCache(), output)
+                .Start("TestPipeline", new MemoryDataCache(), new LocalBuildCache(), output)
                 .Use(new FilenameImporter())
                 .Use(new ExclaimProcessor())
                 .Create();
@@ -100,6 +99,26 @@ namespace GoldenHammer.Tests
                 }
             };
 
+            await pipeline.Build(config);
+
+            output.Bundles.ShouldSatisfyAllConditions(
+                () => {
+                    output.Bundles[0].Name.ShouldBe("Bundle 1");
+                    output.Bundles[0].Assets.ShouldSatisfyAllConditions(
+                        () => output.Bundles[0].Assets.ToList().ShouldContain(asset => asset.Identifier == "Test/File/1.txt" && ((IAsset<string>)asset).Load().Result == "1!!"),
+                        () => output.Bundles[0].Assets.ToList().ShouldContain(asset => asset.Identifier == "Test/File/2.txt" && ((IAsset<string>)asset).Load().Result == "2!!")
+                    );
+                },
+                () => {
+                    output.Bundles[1].Name.ShouldBe("Bundle 2");
+                    output.Bundles[1].Assets.ShouldSatisfyAllConditions(
+                        () => output.Bundles[1].Assets.ToList().ShouldContain(asset => asset.Identifier == "Test/File/3.txt" && ((IAsset<string>)asset).Load().Result == "3!!"),
+                        () => output.Bundles[1].Assets.ToList().ShouldContain(asset => asset.Identifier == "Test/File/4.txt" && ((IAsset<string>)asset).Load().Result == "4!!")
+                    );
+                }
+            );
+
+            output.Bundles.Clear();
             await pipeline.Build(config);
 
             output.Bundles.ShouldSatisfyAllConditions(

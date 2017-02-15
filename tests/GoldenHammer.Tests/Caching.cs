@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GoldenHammer.Caching;
 using Shouldly;
 using Xunit;
 
@@ -14,7 +15,7 @@ namespace GoldenHammer.Tests
         [Fact]
         public void Construct()
         {
-            var storage = new MemoryCas();
+            var storage = new MemoryDataCache();
             storage.ShouldNotBeNull();
         }
 
@@ -31,7 +32,7 @@ namespace GoldenHammer.Tests
         [MemberData(nameof(TestValues))]
         public async Task WrittenValuesCanBeRead(string value)
         {
-            var storage = new MemoryCas();
+            var storage = new MemoryDataCache();
 
             var sha = await storage.Store(async stream => {
                 var bytes = Encoding.UTF8.GetBytes(value);
@@ -48,7 +49,7 @@ namespace GoldenHammer.Tests
         [Fact]
         public async Task MultipleWrittenValuesCanBeRead()
         {
-            var storage = new MemoryCas();
+            var storage = new MemoryDataCache();
 
             var shas = new Dictionary<string, string>();
 
@@ -73,7 +74,7 @@ namespace GoldenHammer.Tests
         [Fact]
         public async Task UnknownShaThrows()
         {
-            var storage = new MemoryCas();
+            var storage = new MemoryDataCache();
 
             var exception = await Assert.ThrowsAsync<FileNotFoundException>(async () => {
                 await storage.Open("unknown");
@@ -90,7 +91,7 @@ namespace GoldenHammer.Tests
         [Fact]
         public void Construct()
         {
-            var storage = new FileCas(_temp);
+            var storage = new LocalDataCache(_temp);
             storage.ShouldNotBeNull();
         }
 
@@ -107,7 +108,7 @@ namespace GoldenHammer.Tests
         [MemberData(nameof(TestValues))]
         public async Task WrittenValuesCanBeRead(string value)
         {
-            var storage = new FileCas(_temp);
+            var storage = new LocalDataCache(_temp);
 
             var sha = await storage.Store(async stream => {
                 var bytes = Encoding.UTF8.GetBytes(value);
@@ -124,7 +125,7 @@ namespace GoldenHammer.Tests
         [Fact]
         public async Task MultipleWrittenValuesCanBeRead()
         {
-            var storage = new FileCas(_temp);
+            var storage = new LocalDataCache(_temp);
 
             var shas = new Dictionary<string, string>();
 
@@ -149,7 +150,7 @@ namespace GoldenHammer.Tests
         [Fact]
         public async Task UnknownShaThrows()
         {
-            var storage = new FileCas(_temp);
+            var storage = new LocalDataCache(_temp);
 
             var exception = await Assert.ThrowsAsync<FileNotFoundException>(async () => {
                 await storage.Open("unknown");
@@ -171,7 +172,7 @@ namespace GoldenHammer.Tests
 //        [Fact]
 //        public async Task AssetProxiesLoadOriginalContent()
 //        {
-//            var mem = new AssetMemoryManager(new MemoryCas());
+//            var mem = new AssetMemoryManager(new MemoryDataCache());
 //            var asset = new ProxyAsset<string>("test", null, () => Task.FromResult("foo"));
 //
 //            var proxy = await mem.CreateProxy(asset);

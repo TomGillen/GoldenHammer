@@ -42,7 +42,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Asset.cs" />
-    <Compile Include="Caching.cs" />
+    <Compile Include="Caching\AssetMemoryManager.cs" />
+    <Compile Include="Caching\BuildCache.cs" />
+    <Compile Include="Caching\BuildCacheExtensions.cs" />
+    <Compile Include="Caching\CacheRecord.cs" />
+    <Compile Include="Caching\HashingExtensions.cs" />
+    <Compile Include="Caching\DataCacheExtensions.cs" />
+    <Compile Include="Caching\LocalBuildCache.cs" />
+    <Compile Include="Caching\LocalDataCache.cs" />
+    <Compile Include="Caching\IBuildCache.cs" />
+    <Compile Include="Caching\IDataCache.cs" />
+    <Compile Include="Caching\MemoryDataCache.cs" />
+    <Compile Include="Caching\NullBuildCache.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Importer.cs" />
     <Compile Include="Packager.cs" />
