@@ -222,8 +222,8 @@ Target "SourceLink" (fun _ ->
 // Release Notes
 
 Target "ReleaseNotes" (fun _ ->
-    runExe "packages/build/GitChangeLog/tools/GitChangeLog.exe" "-o build/RELEASE_NOTES.md --header \"# Release Notes\" --source-links --compare-links" |> ignore
-    runExe "packages/build/GitChangeLog/tools/GitChangeLog.exe" "-o build/RELEASE_NOTES_MINIMAL.md" |> ignore
+    runExe "packages/build/GitChangeLog/tools/GitChangeLog.exe" "collect -o build/RELEASE_NOTES.md --header \"# Release Notes\" --source-links --compare-links" |> ignore
+    runExe "packages/build/GitChangeLog/tools/GitChangeLog.exe" "collect -o build/RELEASE_NOTES_MINIMAL.md" |> ignore
 )
 
 // --------------------------------------------------------------------------------------
