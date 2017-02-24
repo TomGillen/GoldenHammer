@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ProtoBuf;
 
 namespace GoldenHammer.Caching
 {
@@ -21,12 +22,18 @@ namespace GoldenHammer.Caching
 
     public class AssetMemoryManager
     {
+        #region Nested Types
+
         private class ProxyAsset<T> : IAsset<T>, IProxyAsset
         {
-            private readonly string _identifier;
-            private readonly dynamic _config;
             private readonly string _contentSha;
             private readonly AssetMemoryManager _storage;
+
+            public string Identifier { get; }
+
+            public dynamic Configuration { get; }
+
+            public Type AssetType => typeof(T);
 
             public ProxyAsset(ProxyMeta<T> meta, AssetMemoryManager storage)
                 : this(meta.Identifier, meta.Configuration, meta.ContentSha, storage)
@@ -35,23 +42,20 @@ namespace GoldenHammer.Caching
 
             public ProxyAsset(string identifier, object config, string contentSha, AssetMemoryManager storage)
             {
-                _identifier = identifier;
-                _config = config;
+                Identifier = identifier;
+                Configuration = config;
                 _contentSha = contentSha;
                 _storage = storage;
             }
 
-            public string Identifier => _identifier;
-            public dynamic Configuration => _config;
-            public Type AssetType => typeof(T);
             public Task<T> Load() => _storage.LoadContent<T>(_contentSha);
 
             public IProxyMeta GetMeta()
             {
                 return new ProxyMeta<T> {
-                    Identifier = _identifier,
+                    Identifier = Identifier,
                     ContentSha = _contentSha,
-                    Configuration = _config
+                    Configuration = Configuration
                 };
             }
         }
@@ -59,11 +63,13 @@ namespace GoldenHammer.Caching
         private class ProxyMeta<T> : IProxyMeta
         {
             public string Identifier { get; set; }
-            public string ContentSha { get; set; }
             public object Configuration { get; set; }
+            public string ContentSha { get; set; }
 
             public IProxyAsset ConstructProxy(AssetMemoryManager mem) => new ProxyAsset<T>(this, mem);
         }
+
+        #endregion
 
         private readonly IDataCache _storage;
         private readonly Dictionary<string, WeakReference> _cache;
@@ -97,7 +103,7 @@ namespace GoldenHammer.Caching
                 .Single(m => m.Name == "CreateProxyInternal")
                 .MakeGenericMethod(assetType);
 
-            return asset => (Task<IProxyAsset>) method.Invoke(this, new object[] { asset });
+            return asset => (Task<IProxyAsset>) method.Invoke(this, new object[] {asset});
         }
 
         // called via reflection
@@ -111,12 +117,12 @@ namespace GoldenHammer.Caching
         {
             var content = await asset.Load();
             var hash = await StoreContent(content);
-            return new ProxyAsset<T>(asset.Identifier, (object)asset.Configuration, hash, this);
+            return new ProxyAsset<T>(asset.Identifier, (object) asset.Configuration, hash, this);
         }
 
         private Task<string> StoreContent<T>(T content)
         {
-            return _storage.Store(stream => ProtoBuf.Serializer.Serialize(stream, content));
+            return _storage.Store(stream => Serializer.Serialize(stream, content));
         }
 
         public async Task<T> LoadContent<T>(string hash)
@@ -129,7 +135,7 @@ namespace GoldenHammer.Caching
             }
 
             using (var stream = await _storage.Open(hash)) {
-                var content = ProtoBuf.Serializer.Deserialize<T>(stream);
+                var content = Serializer.Deserialize<T>(stream);
 
                 lock (_cache) {
                     T cached;

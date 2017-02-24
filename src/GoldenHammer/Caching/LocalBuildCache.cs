@@ -7,18 +7,11 @@ namespace GoldenHammer.Caching
 {
     public class LocalBuildCache : IBuildCache
     {
-        private readonly string _directory;
+        public string BaseDirectory { get; }
 
         public LocalBuildCache(string directory = "build_cache")
         {
-            _directory = directory;
-        }
-
-        public string BaseDirectory => _directory;
-
-        private string DataFilename(string key)
-        {
-            return Path.Combine(BaseDirectory, key.Substring(0, 1), key);
+            BaseDirectory = directory;
         }
 
         public async Task<CacheRecord> Fetch(string key)
@@ -40,14 +33,17 @@ namespace GoldenHammer.Caching
         {
             var path = DataFilename(key);
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "");
-
-            var env = Environment.CurrentDirectory;
-
+            
             using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
             using (var writer = new StreamWriter(stream)) {
                 var json = JsonConvert.SerializeObject(record);
                 await writer.WriteAsync(json);
             }
+        }
+
+        private string DataFilename(string key)
+        {
+            return Path.Combine(BaseDirectory, key.Substring(0, 1), key);
         }
     }
 }

@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GoldenHammer.Configuration;
 
 namespace GoldenHammer.Caching
 {
     public static class BuildCacheExtensions
     {
-        public static async Task<IEnumerable<IProxyAsset>> FetchOrBuild(
-            this IBuildCache cache, string pipeline, AssetMemoryManager mem, AssetSource source,
+        public static async Task<IEnumerable<IProxyAsset>> FetchOrCreate(
+            this IBuildCache cache,
+            string pipeline, AssetMemoryManager mem, AssetSource source,
             Func<AssetSource, Task<IEnumerable<IProxyAsset>>> build)
         {
             var cacheKey = BuildCache.ComputeCacheKey(pipeline, source);
@@ -32,7 +34,7 @@ namespace GoldenHammer.Caching
 
             var assets = (await build(source)).ToList();
 
-            string[] extraFiles = new string[0]; //todo record extra input files
+            var extraFiles = new string[0]; //TODO: record extra input files
             var serializedProxies = assets.Select(mem.SerializeProxy).ToList();
 
             if (extraFiles.Length == 0) {

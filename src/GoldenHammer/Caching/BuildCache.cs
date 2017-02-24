@@ -2,6 +2,7 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using GoldenHammer.Configuration;
 using Newtonsoft.Json;
 
 namespace GoldenHammer.Caching

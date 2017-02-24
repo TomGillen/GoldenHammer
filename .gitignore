@@ -175,9 +175,6 @@ packages/
 # Generated documentation folder
 docs/output/
 
-# Temp folder used for publishing docs
-temp/
-
 # Test results produced by build
 TestResults.xml
 TestResults.html
@@ -190,7 +187,9 @@ localpackages/
 paket-files
 *.orig
 .paket/paket.exe
-docs/content/license.md
-docs/content/release-notes.md
 .fake
-docs/tools/FSharp.Formatting.svclog
+
+prepare-release.cmd
+prepare-release.sh
+publish-release.cmd
+publish-release.sh

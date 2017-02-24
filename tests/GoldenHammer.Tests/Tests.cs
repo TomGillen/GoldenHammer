@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GoldenHammer.Caching;
+using GoldenHammer.Configuration;
 using Xunit;
 using Shouldly;
 

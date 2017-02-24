@@ -1,31 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using GoldenHammer.Caching;
+using GoldenHammer.Configuration;
 using MoreLinq;
 
 namespace GoldenHammer
 {
     public class PipelineBuilder
     {
+        #region Nested Types
+
         private class Processor<TIn, TOut> : IAssetProcessor
         {
             private readonly IAssetProcessor<TIn, TOut> _processor;
+
+            public string Identity => _processor.Identity;
 
             public Processor(IAssetProcessor<TIn, TOut> processor)
             {
                 _processor = processor;
             }
 
-            public string Identity => _processor.Identity;
-
             public async Task<IAsset> Process(BuildContext context, IAsset asset)
             {
                 return await _processor.Process(context, asset as IAsset<TIn>);
             }
         }
+
+        #endregion
 
         private IAssetPackager _packager;
         private IDataCache _storage;
@@ -70,27 +75,25 @@ namespace GoldenHammer
 
     public class BuildPipeline : IPipelineIdentity
     {
-        private readonly IDataCache _storage;
         private readonly IBuildCache _cache;
         private readonly IAssetPackager _packager;
         private readonly List<IAssetImporter> _importers;
         private readonly Dictionary<Type, IAssetProcessor> _processors;
         private readonly AssetMemoryManager _memoryManager;
 
+        public string Identity { get; }
+
         internal BuildPipeline(IDataCache storage, IBuildCache cache,
                                IAssetPackager packager, List<IAssetImporter> importers,
                                Dictionary<Type, IAssetProcessor> processors)
         {
-            _storage = storage;
             _packager = packager;
             _importers = importers;
             _processors = processors;
             _cache = cache;
-            _memoryManager = new AssetMemoryManager(_storage);
+            _memoryManager = new AssetMemoryManager(storage);
             Identity = CalculateId();
         }
-
-        public string Identity { get; }
 
         private string CalculateId()
         {
@@ -111,7 +114,7 @@ namespace GoldenHammer
 
         public async Task Build(BuildConfiguration config)
         {
-            var context = new BuildContext(this);
+            var context = new BuildContext();
 
             foreach (var package in config.Packages) {
                 await BuildPackage(context, package);
@@ -142,7 +145,7 @@ namespace GoldenHammer
 
         private Task<IEnumerable<IProxyAsset>> BuildAsset(BuildContext context, AssetSource source)
         {
-            return _cache.FetchOrBuild(Identity, _memoryManager, source, async s => {
+            return _cache.FetchOrCreate(Identity, _memoryManager, source, async s => {
                 var imported = await ImportAsset(context, source);
                 return await Task.WhenAll(imported.Select(a => ProcessAsset(context, a)));
             });
@@ -167,16 +170,9 @@ namespace GoldenHammer
 
     public class BuildContext
     {
-        private readonly BuildPipeline _pipeline;
-
-        public BuildContext(BuildPipeline pipeline)
-        {
-            _pipeline = pipeline;
-        }
-
         public IAsset<T> Asset<T>(string identifier, dynamic config, T data)
         {
-            return new ValueAsset<T>(identifier, (object)config, data);
+            return new ValueAsset<T>(identifier, (object) config, data);
         }
     }
 }

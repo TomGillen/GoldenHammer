@@ -5,14 +5,14 @@ namespace GoldenHammer
 {
     public struct AssetBundle
     {
+        public string Name { get; private set; }
+        public IEnumerable<IAsset> Assets { get; private set; }
+
         public AssetBundle(string name, IEnumerable<IAsset> assets)
         {
             Name = name;
             Assets = assets;
         }
-
-        public string Name { get; private set; }
-        public IEnumerable<IAsset> Assets { get; private set; }
     }
 
     public interface IAssetPackager : IPipelineIdentity

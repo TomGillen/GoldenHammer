@@ -7,16 +7,15 @@ namespace GoldenHammer.Caching
 {
     public class LocalDataCache : IDataCache
     {
-        private readonly string _directory;
+        public string BaseDirectory { get; }
+
+        public string DataDirectory => Path.Combine(BaseDirectory, "data");
+        public string TemporaryDirectory => Path.Combine(BaseDirectory, "temp");
 
         public LocalDataCache(string directory)
         {
-            _directory = directory;
+            BaseDirectory = directory;
         }
-
-        public string BaseDirectory => _directory;
-        public string DataDirectory => Path.Combine(_directory, "data");
-        public string TemporaryDirectory => Path.Combine(_directory, "temp");
 
         public Task<bool> HasContent(string hash)
         {
