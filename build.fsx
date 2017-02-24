@@ -74,30 +74,30 @@ let packageOut = "build/package"
 // --------------------------------------------------------------------------------------
 // Versioning
 
-type VersionInfo = { 
+type VersionInfo = {
     SemVer : string;
     AssemblySemVer : string;
     NuGetVersion: string;
     InformationalVersion : string;
-    PreReleaseTag: string; 
+    PreReleaseTag: string;
 }
-    
+
 let readVersionJson json = {
     SemVer = json?SemVer.AsString()
     AssemblySemVer = json?AssemblySemVer.AsString()
     NuGetVersion = json?NuGetVersion.AsString()
     InformationalVersion = json?InformationalVersion.AsString()
-    PreReleaseTag = json?PreReleaseTag.AsString() 
+    PreReleaseTag = json?PreReleaseTag.AsString()
 }
 
 let runExe exe args =
     let output = new StringBuilder()
 #if MONO
-    let proc (info : ProcessStartInfo) = 
+    let proc (info : ProcessStartInfo) =
         info.FileName <- "mono"
         info.Arguments <- (sprintf "%s %s" exe args)
 #else
-    let proc (info : ProcessStartInfo) = 
+    let proc (info : ProcessStartInfo) =
         info.FileName <- exe
         info.Arguments <- args
 #endif
@@ -106,8 +106,8 @@ let runExe exe args =
     output.ToString()
 
 let getVersion() : VersionInfo =
-    runExe "packages/build/GitVersion.CommandLine/tools/GitVersion.exe" "" 
-    |> JsonValue.Parse 
+    runExe "packages/build/GitVersion.CommandLine/tools/GitVersion.exe" ""
+    |> JsonValue.Parse
     |> readVersionJson
 
 let version = getVersion()
@@ -166,7 +166,7 @@ Target "CopyBinaries" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Clean build results
 
-let vsProjProps = 
+let vsProjProps =
 #if MONO
     [ ("DefineConstants","MONO"); ("Configuration", configuration) ]
 #else
@@ -232,12 +232,17 @@ Target "ReleaseNotes" (fun _ ->
 Target "DraftRelease" (fun _ ->
     CreateDir "build"
     let token = getBuildParamOrDefault "token" (environVarOrDefault "GITHUB_TOKEN" "")
-    let proc (info : ProcessStartInfo) = 
+    let proc (info : ProcessStartInfo) =
       info.UseShellExecute <- true
       info.FileName <- "github_changelog_generator"
-      info.Arguments <- (sprintf "-u %s -p %s --token=%s --future-release=%s --output=build/DRAFT_RELEASE.md --unreleased-only --header-label --cache-file=build/changelog-cache --cache-log=build/changelog-log.txt" gitOwner gitName token version.SemVer)    
+      info.Arguments <- (sprintf "-u %s -p %s --token=%s --future-release=%s --output=build/DRAFT_RELEASE.md --unreleased-only --header-label --cache-file=build/changelog-cache --cache-log=build/changelog-log.txt" gitOwner gitName token version.SemVer)
     let result = ExecProcess proc (TimeSpan.FromMinutes 5.0)
     if result <> 0 then failwithf "github_changelog_generator failed with non-zero exit code"
+    let mutable notes = File.ReadAllText("build/DRAFT_RELEASE.md")
+    let footnote = notes.LastIndexOf("\* *This Change Log was automatically")
+    if footnote > 0 then
+        notes <- notes.Substring(0, footnote).Trim()
+        File.WriteAllText("build/DRAFT_RELEASE.md", notes)
 )
 
 // --------------------------------------------------------------------------------------
@@ -247,6 +252,14 @@ Target "TagRelease" (fun _ ->
     let tagName = sprintf "v%s" version.SemVer
     let releaseNotes = File.ReadAllText("DRAFT_RELEASE.md")
     runGitCommand ".git"  (sprintf "tag -a %s -m %s" tagName releaseNotes) |> ignore
+)
+
+// --------------------------------------------------------------------------------------
+// Publish Github Release
+
+Target "PublishGithubRelease" (fun _ ->
+    let token = getBuildParamOrDefault "token" (environVarOrDefault "GITHUB_TOKEN" "")
+    runExe "packages/build/GitChangeLog/tools/GitChangeLog.exe" (sprintf "release --token %s" token) |> ignore
 )
 
 // --------------------------------------------------------------------------------------
